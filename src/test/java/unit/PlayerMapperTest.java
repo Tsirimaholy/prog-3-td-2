@@ -16,9 +16,15 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static utils.TestUtils.*;
+import static utils.TestUtils.playerEntityRakoto;
+import static utils.TestUtils.playerModelRakoto;
+import static utils.TestUtils.rakotoModelScorer;
+import static utils.TestUtils.scorerRakoto;
+import static utils.TestUtils.teamBarea;
+import static utils.TestUtils.teamGhana;
 
 public class PlayerMapperTest {
     public static final int MATCH_ID = 1;
@@ -99,5 +105,34 @@ public class PlayerMapperTest {
                 .ownGoal(false)
                 .match(matchEntity1)
                 .build(), actual);
+    }
+
+    @Test
+    void player_domain_to_entity_ok() {
+        when(teamRepositoryMock.findByName("Barea"))
+                .thenReturn(teamBarea());
+
+        PlayerEntity expected = playerEntityRakoto(teamBarea());
+        PlayerEntity actual = subject.toEntity(Player.builder()
+                .id(1)
+                .name("Rakoto")
+                .teamName("Barea")
+                .isGuardian(false)
+                .build());
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void player_domain_to_entity_ko() {
+        when(teamRepositoryMock.findByName("Barea"))
+                .thenReturn(teamBarea());
+
+        assertThrows(RuntimeException.class, () -> subject.toEntity(Player.builder()
+                .id(1)
+                .name("Rakoto")
+                .teamName("Barea")
+                // The isGuardian attribute was not set, so it's null
+                .build()));
     }
 }
