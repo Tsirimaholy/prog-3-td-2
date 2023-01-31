@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -17,9 +18,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 @SpringBootTest(classes = FootApi.class)
 @AutoConfigureMockMvc
@@ -27,6 +30,14 @@ class PlayerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    Player modifiedPlayer1() {
+        return Player.builder()
+                .id(1)
+                .name("J2")
+                .isGuardian(true)
+                .build();
+    }
 
     Player player1() {
         return Player.builder()
@@ -86,6 +97,20 @@ class PlayerIntegrationTest {
 
         assertEquals(1, actual.size());
         assertEquals(toCreate, actual.get(0).toBuilder().id(null).build());
+    }
+
+    @Test
+    void update_players_ok() throws Exception {
+        MockHttpServletResponse response = mockMvc.perform(
+                        put("/players")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(List.of(modifiedPlayer1())))
+                )
+                .andReturn().getResponse();
+
+        List<Player> players = convertFromHttpResponse(response);
+        assertEquals(HttpStatus.OK.value(), response.getStatus());
+        assertNotEquals(modifiedPlayer1(), players.get(0));
     }
 
     private List<Player> convertFromHttpResponse(MockHttpServletResponse response)
