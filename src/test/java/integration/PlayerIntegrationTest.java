@@ -2,6 +2,7 @@ package integration;
 
 import app.foot.FootApi;
 import app.foot.controller.rest.Player;
+import app.foot.exception.BadRequestException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
@@ -19,7 +20,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -38,7 +41,13 @@ class PlayerIntegrationTest {
                 .isGuardian(true)
                 .build();
     }
-
+    Player modifiedPlayerWithInvalidId() {
+        return Player.builder()
+                .id(10000)
+                .name("J2")
+                .isGuardian(true)
+                .build();
+    }
     Player player1() {
         return Player.builder()
                 .id(1)
@@ -111,6 +120,24 @@ class PlayerIntegrationTest {
         List<Player> players = convertFromHttpResponse(response);
         assertEquals(HttpStatus.OK.value(), response.getStatus());
         assertNotEquals(modifiedPlayer1(), players.get(0));
+    }
+
+    @Test
+    void update_players_ko() {
+        MockHttpServletResponse response = null;
+        try {
+            response = mockMvc.perform(
+                            put("/players")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(List.of(modifiedPlayerWithInvalidId())))
+                    )
+                    .andReturn().getResponse();
+        } catch (Exception e) {
+            assertEquals(BadRequestException.class, e.getCause().getClass());
+        }
+
+        assertNull(response);
+
     }
 
     private List<Player> convertFromHttpResponse(MockHttpServletResponse response)

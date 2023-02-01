@@ -36,8 +36,7 @@ public class PlayerController {
                 .collect(Collectors.toUnmodifiableList());
     }
 
-    //TODO:
-    // Don't forget to add integration tests for this
+
     @PutMapping("/players")
     public List<Player> updatePlayer(@RequestBody List<Player> players) {
         List<app.foot.model.Player> playersToUpdate = players.stream()
